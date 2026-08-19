@@ -22,6 +22,7 @@ todos multi-tenant por `instance`.
   (admin global, síndico, morador, portaria).
 - **Inbox** — canal direto morador ↔ síndico.
 - **Multi-instância** — um mesmo backend atende vários condomínios isolados por `instance`.
+- **Admin Global** — painel de governança da plataforma: gestão de instâncias, planos e suporte.
 
 ## Stack
 
@@ -30,7 +31,7 @@ todos multi-tenant por `instance`.
 | backend       | Node + Express + TypeScript (tsx), `pg`, Zod | `npm run dev`         |
 | banco         | PostgreSQL (16 local em Docker / Supabase)    | `scripts/db-local.sh` |
 | web-sindico   | React 19 + Vite + React Query + Zustand       | `npm run dev`         |
-| web (morador) | React 19 + Vite + Tailwind                    | `npm run dev`         |
+| web (admin global) | React 19 + Vite + Tailwind              | `npm run dev`         |
 | app-mobile    | Flutter (Dart)                                | `flutter run`         |
 
 ## Estrutura do repositório
@@ -41,7 +42,7 @@ CondoHub/
 │   ├── backend/        # API + banco (Node + Express + TypeScript, Postgres/Supabase)
 │   ├── app-mobile/     # App do morador/portaria (Flutter)
 │   ├── web-sindico/    # Painel do síndico/admin (React + Vite)
-│   └── web/            # Web do morador (React + Vite)
+│   └── web/            # Painel Admin Global — Super Admin Console (React + Vite)
 ├── scripts/
 │   ├── db-local.sh     # Sobe um Postgres LOCAL (Docker) e roda TODAS as migrations
 │   └── dev-all.sh      # Sobe backend + web-sindico + app-mobile de uma vez
@@ -96,7 +97,7 @@ cd dev/backend && cp .env.example .env && cd ../..
 
 Depois disso:
 
-- API/backend: <http://localhost:3000> · Swagger: <http://localhost:3000/docs> · health: <http://localhost:3000/health>
+- API/backend: <http://localhost:3000> · Swagger: <http://localhost:3000/api/docs> · health: <http://localhost:3000/health>
 - web-sindico: <http://localhost:5173>
 - app-mobile: abre no emulador/simulador/dispositivo conectado
 
@@ -194,7 +195,7 @@ cp .env.example .env      # ajuste DATABASE_URL se não usar o Postgres local pa
 npm run dev                # API em http://localhost:3000 (tsx watch, hot-reload)
 ```
 
-- Swagger / docs: <http://localhost:3000/docs>
+- Swagger / docs: <http://localhost:3000/api/docs>
 - Health: <http://localhost:3000/health> → `{"ok":true}`
 - Variáveis principais (validadas por Zod em `src/config/env.ts`): `DATABASE_URL`, `AUTH_MODE`
   (`jwt`|`mock`), `TENANT_MODE` (`path`|`mock`), `UPLOAD_MODE` (`local`|`supabase`),
@@ -213,13 +214,17 @@ npm run dev               # http://localhost:5173
 - Para bater na API local real: no `.env.local`, mantenha `VITE_ENABLE_FULL_MOCK=false` (precisa
   de dados no banco — veja [Seed / dados de demonstração](#seed--dados-de-demonstração)).
 
-### web — morador (`dev/web`)
+### web — Admin Global (`dev/web`)
 
 ```bash
 cd dev/web
 npm install
 npm run dev               # http://localhost:5173 (usa VITE_API_BASE_URL do .env.local)
 ```
+
+Painel de governança da plataforma (Super Admin): gestão de instâncias, planos e suporte.
+Login em `/admin/login` — use o Super Admin do [seed](#seed--dados-de-demonstração)
+(`admin@condohub.com` / `admin123`).
 
 ### app-mobile (`dev/app-mobile`)
 
@@ -267,9 +272,9 @@ SELECT crypt('minha_senha', gen_salt('bf'));
 | Serviço       | URL                           |
 | ------------- | ------------------------------ |
 | backend / API | <http://localhost:3000>       |
-| Swagger       | <http://localhost:3000/docs>  |
+| Swagger       | <http://localhost:3000/api/docs>  |
 | web-sindico   | <http://localhost:5173>       |
-| web (morador) | <http://localhost:5173>*      |
+| web (admin global) | <http://localhost:5173>* |
 | Postgres      | `localhost:5433`              |
 
 \* Se subir os dois apps Vite juntos, o segundo migra para `5174` automaticamente.

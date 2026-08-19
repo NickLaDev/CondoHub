@@ -81,7 +81,7 @@ fi
 # 1) Backend (banco LOCAL; não usa o .env online)
 if [ "$RUN_BACKEND" = true ]; then
   ensure_node_modules "$BACKEND_DIR"
-  echo "[dev-all] Subindo backend em $API_BASE_URL (Swagger: $API_BASE_URL/docs)..."
+  echo "[dev-all] Subindo backend em $API_BASE_URL (Swagger: $API_BASE_URL/api/docs)..."
   (
     cd "$BACKEND_DIR"
     DATABASE_URL="$LOCAL_DATABASE_URL" \

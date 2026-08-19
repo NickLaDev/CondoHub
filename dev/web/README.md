@@ -1,73 +1,60 @@
-# React + TypeScript + Vite
+# CondoHub — Admin Global (Super Admin Console)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Painel de governança da plataforma: gestão de instâncias (condomínios), planos e suporte.
+React 19 + Vite + TypeScript + Tailwind.
 
-Currently, two official plugins are available:
+> Setup rápido do monorepo inteiro: veja o [README raiz](../../README.md#início-rápido-2-comandos).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Instalação e execução
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd dev/web
+npm install
+cp .env.example .env.local   # aponta VITE_API_BASE_URL pro backend local
+npm run dev                   # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Login em `/admin/login` com o Super Admin do [seed local](../../README.md#seed--dados-de-demonstração)
+(`admin@condohub.com` / `admin123`).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Scripts
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Comando         | O que faz                          |
+| --------------- | ----------------------------------- |
+| `npm run dev`    | servidor de desenvolvimento (Vite)  |
+| `npm run build`  | typecheck (`tsc -b`) + build de produção |
+| `npm run preview`| serve o build de produção localmente |
+| `npm run lint`   | ESLint                              |
+
+## Páginas
+
+| Rota                        | Conteúdo                                  |
+| ---------------------------- | ------------------------------------------ |
+| `/admin/login`                | Login do Super Admin                       |
+| `/admin/dashboard`            | Indicadores gerais da plataforma           |
+| `/admin/instances`            | Lista e detalhe de instâncias (condomínios) — suspender/reativar |
+| `/admin/plans`                | Planos disponíveis (criar, editar, arquivar) |
+| `/admin/support`              | Ferramentas de suporte (reset de síndico)  |
+| `/admin/logs`                 | Logs de auditoria da plataforma            |
+
+## Estrutura
+
 ```
+src/
+  pages/            # Uma pasta por rota (login, dashboard, instances, plans, support, logs)
+  components/
+    layout/          # Shell/layout autenticado
+    ui/               # Componentes de UI reutilizáveis
+  services/
+    api/              # Client HTTP (axios/fetch), config, tipos, paginação
+    auth.ts            # Login/sessão do Super Admin
+    adminStats.ts       # Indicadores do dashboard
+```
+
+## Variáveis de ambiente
+
+| Variável              | Default                  | Descrição                    |
+| ---------------------- | ------------------------- | ------------------------------ |
+| `VITE_API_BASE_URL`     | `http://localhost:3000`   | Base URL da API (`dev/backend`) |
+
+Ver [`.env.example`](.env.example).

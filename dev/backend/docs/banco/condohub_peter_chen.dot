@@ -1,0 +1,388 @@
+digraph CondoHub_PeterChen {
+  graph [rankdir=LR, splines=ortho, nodesep=0.45, ranksep=1.0, bgcolor="white"];
+  node  [fontname="Helvetica", fontsize=10];
+  edge  [fontname="Helvetica", fontsize=9];
+
+  // ====== Node styles (Peter Chen-ish) ======
+  // Entities: rectangles
+  // Relationships: diamonds
+  // Attributes: ovals (PK underlined via HTML)
+
+  // ---------- ENTITIES ----------
+  PLAN              [shape=box];
+  INSTANCE           [shape=box];
+  USER               [shape=box];
+  USER_CREDENTIAL    [shape=box];
+  SESSION            [shape=box];
+
+  CONDO_PROFILE      [shape=box];
+  BLOCK              [shape=box];
+  UNIT               [shape=box];
+  INVITE             [shape=box];
+
+  ATTACHMENT         [shape=box];
+  ATTACHMENT_LINK    [shape=box];
+
+  AUDIT_LOG          [shape=box];
+  PUSH_TOKEN         [shape=box];
+
+  ANNOUNCEMENT       [shape=box];
+  ANNOUNCEMENT_ACK   [shape=box];
+
+  CHANNEL            [shape=box];
+  CHANNEL_POST       [shape=box];
+  CHANNEL_COMMENT    [shape=box];
+  MODERATION_ACTION  [shape=box];
+
+  INBOX_THREAD       [shape=box];
+  INBOX_MESSAGE      [shape=box];
+
+  TICKET             [shape=box];
+  TICKET_MESSAGE     [shape=box];
+  TICKET_STATUS_HISTORY [shape=box];
+
+  DELIVERY           [shape=box];
+  DELIVERY_EVENT     [shape=box];
+  DELIVERY_TURN      [shape=box];
+
+  // ---------- RELATIONSHIPS ----------
+  R_PLAN_HAS_INSTANCE        [shape=diamond, label="HAS"];
+  R_INSTANCE_CONTAINS_USER   [shape=diamond, label="CONTAINS"];
+  R_USER_HAS_CREDENTIAL      [shape=diamond, label="HAS"];
+  R_USER_HAS_SESSION         [shape=diamond, label="HAS"];
+  R_INSTANCE_HAS_PROFILE     [shape=diamond, label="HAS"];
+  R_INSTANCE_HAS_BLOCK       [shape=diamond, label="HAS"];
+  R_BLOCK_HAS_UNIT           [shape=diamond, label="HAS"];
+  R_UNIT_HOUSES_USER         [shape=diamond, label="HOUSES"];
+  R_INSTANCE_ISSUES_INVITE   [shape=diamond, label="ISSUES"];
+  R_UNIT_TARGETS_INVITE      [shape=diamond, label="TARGETS (optional)"];
+
+  R_INSTANCE_OWNS_ATTACHMENT [shape=diamond, label="OWNS"];
+  R_USER_UPLOADS_ATTACHMENT  [shape=diamond, label="UPLOADS"];
+  R_UNIT_SCOPES_ATTACHMENT   [shape=diamond, label="SCOPES (optional)"];
+  R_ATTACHMENT_HAS_LINK      [shape=diamond, label="LINKS"];
+
+  R_INSTANCE_WRITES_AUDIT    [shape=diamond, label="WRITES"];
+  R_USER_ACTS_AUDIT          [shape=diamond, label="ACTS (optional)"];
+
+  R_INSTANCE_HAS_PUSH        [shape=diamond, label="HAS"];
+  R_USER_REG_PUSH            [shape=diamond, label="REGISTERS"];
+
+  R_INSTANCE_HAS_ANN         [shape=diamond, label="HAS"];
+  R_USER_CREATES_ANN         [shape=diamond, label="CREATES"];
+  R_ANN_HAS_ACK              [shape=diamond, label="HAS"];
+  R_USER_ACKS_ANN            [shape=diamond, label="ACKS"];
+
+  R_INSTANCE_HAS_CHANNEL     [shape=diamond, label="HAS"];
+  R_CHANNEL_HAS_POST         [shape=diamond, label="CONTAINS"];
+  R_USER_WRITES_POST         [shape=diamond, label="WRITES"];
+  R_POST_HAS_COMMENT         [shape=diamond, label="CONTAINS"];
+  R_USER_WRITES_COMMENT      [shape=diamond, label="WRITES"];
+  R_INSTANCE_RECORDS_MOD     [shape=diamond, label="RECORDS"];
+  R_CHANNEL_SCOPES_MOD       [shape=diamond, label="SCOPES"];
+  R_USER_CREATES_MOD         [shape=diamond, label="CREATES"];
+  R_USER_TARGETS_MOD         [shape=diamond, label="TARGETS"];
+
+  R_INSTANCE_HAS_THREAD      [shape=diamond, label="HAS"];
+  R_UNIT_HAS_THREAD          [shape=diamond, label="HAS (0..1)"];
+  R_THREAD_HAS_MSG           [shape=diamond, label="CONTAINS"];
+  R_USER_SENDS_MSG           [shape=diamond, label="SENDS"];
+
+  R_INSTANCE_HAS_TICKET      [shape=diamond, label="HAS"];
+  R_UNIT_OWNS_TICKET         [shape=diamond, label="OWNS"];
+  R_USER_CREATES_TICKET      [shape=diamond, label="CREATES"];
+  R_USER_ASSIGNED_TICKET     [shape=diamond, label="ASSIGNED (optional)"];
+  R_TICKET_HAS_MSG           [shape=diamond, label="CONTAINS"];
+  R_USER_SENDS_TMSG          [shape=diamond, label="SENDS"];
+  R_TICKET_HAS_HIST          [shape=diamond, label="TRACKS"];
+  R_USER_CHANGES_STATUS      [shape=diamond, label="CHANGES"];
+
+  R_INSTANCE_HAS_DELIVERY    [shape=diamond, label="HAS"];
+  R_UNIT_RECEIVES_DELIVERY   [shape=diamond, label="RECEIVES"];
+  R_USER_CREATES_DELIVERY    [shape=diamond, label="CREATES"];
+  R_USER_ASSIGNED_DELIVERY   [shape=diamond, label="ASSIGNED (optional)"];
+  R_USER_DELIVERED_TO        [shape=diamond, label="DELIVERED_TO (optional)"];
+  R_DELIVERY_HAS_EVENT       [shape=diamond, label="TRACKS"];
+  R_USER_CREATES_DEVENT      [shape=diamond, label="CREATES"];
+  R_INSTANCE_HAS_TURN        [shape=diamond, label="HAS"];
+  R_USER_WORKS_TURN          [shape=diamond, label="WORKS"];
+
+  // ---------- ATTRIBUTES (key ones only) ----------
+  // PLAN
+  PLAN_id   [shape=ellipse, label=<<u>id</u>>];
+  PLAN_name [shape=ellipse, label="name (unique)"];
+  PLAN -> PLAN_id;
+  PLAN -> PLAN_name;
+
+  // INSTANCE
+  INSTANCE_id   [shape=ellipse, label=<<u>id</u>>];
+  INSTANCE_key  [shape=ellipse, label="instance_key (unique)"];
+  INSTANCE_name [shape=ellipse, label="name"];
+  INSTANCE_status [shape=ellipse, label="status"];
+  INSTANCE -> INSTANCE_id;
+  INSTANCE -> INSTANCE_key;
+  INSTANCE -> INSTANCE_name;
+  INSTANCE -> INSTANCE_status;
+
+  // USER
+  USER_id    [shape=ellipse, label=<<u>id</u>>];
+  USER_name  [shape=ellipse, label="name"];
+  USER_email [shape=ellipse, label="email"];
+  USER_roles [shape=ellipse, label="roles[]"];
+  USER_status [shape=ellipse, label="status"];
+  USER -> USER_id;
+  USER -> USER_name;
+  USER -> USER_email;
+  USER -> USER_roles;
+  USER -> USER_status;
+
+  // A few more (keep diagram readable)
+  UNIT_id   [shape=ellipse, label=<<u>id</u>>];
+  UNIT_num  [shape=ellipse, label="number"];
+  UNIT -> UNIT_id;
+  UNIT -> UNIT_num;
+
+  INVITE_id  [shape=ellipse, label=<<u>id</u>>];
+  INVITE_role [shape=ellipse, label="invited_role"];
+  INVITE_token [shape=ellipse, label="token_hash (unique)"];
+  INVITE -> INVITE_id;
+  INVITE -> INVITE_role;
+  INVITE -> INVITE_token;
+
+  ATT_id   [shape=ellipse, label=<<u>id</u>>];
+  ATT_path [shape=ellipse, label="path"];
+  ATT_ct   [shape=ellipse, label="content_type"];
+  ATTACHMENT -> ATT_id;
+  ATTACHMENT -> ATT_path;
+  ATTACHMENT -> ATT_ct;
+
+  TICKET_id [shape=ellipse, label=<<u>id</u>>];
+  TICKET_status [shape=ellipse, label="status"];
+  TICKET_due [shape=ellipse, label="due_at"];
+  TICKET -> TICKET_id;
+  TICKET -> TICKET_status;
+  TICKET -> TICKET_due;
+
+  DELIVERY_id [shape=ellipse, label=<<u>id</u>>];
+  DELIVERY_status [shape=ellipse, label="status"];
+  DELIVERY -> DELIVERY_id;
+  DELIVERY -> DELIVERY_status;
+
+  // ---------- CARDINALITIES (labels near edges) ----------
+  // PLAN 1 --- N INSTANCE
+  PLAN     -> R_PLAN_HAS_INSTANCE   [label="1"];
+  R_PLAN_HAS_INSTANCE -> INSTANCE   [label="N"];
+
+  // INSTANCE 1 --- N USER (user can be ADMIN_GLOBAL with no instance: optional shown on USER side)
+  INSTANCE -> R_INSTANCE_CONTAINS_USER [label="1"];
+  R_INSTANCE_CONTAINS_USER -> USER     [label="0..N"];
+
+  // USER 1 --- 1 USER_CREDENTIAL (conceptual)
+  USER -> R_USER_HAS_CREDENTIAL         [label="1"];
+  R_USER_HAS_CREDENTIAL -> USER_CREDENTIAL [label="1"];
+
+  // USER 1 --- N SESSION
+  USER -> R_USER_HAS_SESSION [label="1"];
+  R_USER_HAS_SESSION -> SESSION [label="N"];
+
+  // INSTANCE 1 --- 1 CONDO_PROFILE
+  INSTANCE -> R_INSTANCE_HAS_PROFILE [label="1"];
+  R_INSTANCE_HAS_PROFILE -> CONDO_PROFILE [label="1"];
+
+  // INSTANCE 1 --- N BLOCK ; BLOCK 1 --- N UNIT
+  INSTANCE -> R_INSTANCE_HAS_BLOCK [label="1"];
+  R_INSTANCE_HAS_BLOCK -> BLOCK [label="N"];
+
+  BLOCK -> R_BLOCK_HAS_UNIT [label="1"];
+  R_BLOCK_HAS_UNIT -> UNIT [label="N"];
+
+  // UNIT 1 --- 0..N USER (staff users may have no unit)
+  UNIT -> R_UNIT_HOUSES_USER [label="1"];
+  R_UNIT_HOUSES_USER -> USER [label="0..N"];
+
+  // INSTANCE 1 --- N INVITE ; UNIT 0..1 --- 0..N INVITE (optional targeting)
+  INSTANCE -> R_INSTANCE_ISSUES_INVITE [label="1"];
+  R_INSTANCE_ISSUES_INVITE -> INVITE [label="N"];
+
+  UNIT -> R_UNIT_TARGETS_INVITE [label="0..1"];
+  R_UNIT_TARGETS_INVITE -> INVITE [label="0..N"];
+
+  // Attachments
+  INSTANCE -> R_INSTANCE_OWNS_ATTACHMENT [label="1"];
+  R_INSTANCE_OWNS_ATTACHMENT -> ATTACHMENT [label="N"];
+
+  USER -> R_USER_UPLOADS_ATTACHMENT [label="1"];
+  R_USER_UPLOADS_ATTACHMENT -> ATTACHMENT [label="0..N"];
+
+  UNIT -> R_UNIT_SCOPES_ATTACHMENT [label="0..1"];
+  R_UNIT_SCOPES_ATTACHMENT -> ATTACHMENT [label="0..N"];
+
+  ATTACHMENT -> R_ATTACHMENT_HAS_LINK [label="1"];
+  R_ATTACHMENT_HAS_LINK -> ATTACHMENT_LINK [label="0..N"];
+
+  // Audit
+  INSTANCE -> R_INSTANCE_WRITES_AUDIT [label="0..1"];
+  R_INSTANCE_WRITES_AUDIT -> AUDIT_LOG [label="0..N"];
+
+  USER -> R_USER_ACTS_AUDIT [label="0..1"];
+  R_USER_ACTS_AUDIT -> AUDIT_LOG [label="0..N"];
+
+  // Push tokens
+  INSTANCE -> R_INSTANCE_HAS_PUSH [label="1"];
+  R_INSTANCE_HAS_PUSH -> PUSH_TOKEN [label="0..N"];
+  USER -> R_USER_REG_PUSH [label="1"];
+  R_USER_REG_PUSH -> PUSH_TOKEN [label="0..N"];
+
+  // Announcements and acks
+  INSTANCE -> R_INSTANCE_HAS_ANN [label="1"];
+  R_INSTANCE_HAS_ANN -> ANNOUNCEMENT [label="0..N"];
+
+  USER -> R_USER_CREATES_ANN [label="1"];
+  R_USER_CREATES_ANN -> ANNOUNCEMENT [label="0..N"];
+
+  ANNOUNCEMENT -> R_ANN_HAS_ACK [label="1"];
+  R_ANN_HAS_ACK -> ANNOUNCEMENT_ACK [label="0..N"];
+
+  USER -> R_USER_ACKS_ANN [label="1"];
+  R_USER_ACKS_ANN -> ANNOUNCEMENT_ACK [label="0..N"];
+
+  // Channels/posts/comments
+  INSTANCE -> R_INSTANCE_HAS_CHANNEL [label="1"];
+  R_INSTANCE_HAS_CHANNEL -> CHANNEL [label="0..N"];
+
+  CHANNEL -> R_CHANNEL_HAS_POST [label="1"];
+  R_CHANNEL_HAS_POST -> CHANNEL_POST [label="0..N"];
+
+  USER -> R_USER_WRITES_POST [label="1"];
+  R_USER_WRITES_POST -> CHANNEL_POST [label="0..N"];
+
+  CHANNEL_POST -> R_POST_HAS_COMMENT [label="1"];
+  R_POST_HAS_COMMENT -> CHANNEL_COMMENT [label="0..N"];
+
+  USER -> R_USER_WRITES_COMMENT [label="1"];
+  R_USER_WRITES_COMMENT -> CHANNEL_COMMENT [label="0..N"];
+
+  // Moderation actions (content is polymorphic; model focuses on who/where)
+  INSTANCE -> R_INSTANCE_RECORDS_MOD [label="1"];
+  R_INSTANCE_RECORDS_MOD -> MODERATION_ACTION [label="0..N"];
+  CHANNEL -> R_CHANNEL_SCOPES_MOD [label="0..1"];
+  R_CHANNEL_SCOPES_MOD -> MODERATION_ACTION [label="0..N"];
+  USER -> R_USER_CREATES_MOD [label="1"];
+  R_USER_CREATES_MOD -> MODERATION_ACTION [label="0..N"];
+  USER -> R_USER_TARGETS_MOD [label="0..1"];
+  R_USER_TARGETS_MOD -> MODERATION_ACTION [label="0..N"];
+
+  // Inbox
+  INSTANCE -> R_INSTANCE_HAS_THREAD [label="1"];
+  R_INSTANCE_HAS_THREAD -> INBOX_THREAD [label="0..N"];
+
+  UNIT -> R_UNIT_HAS_THREAD [label="1"];
+  R_UNIT_HAS_THREAD -> INBOX_THREAD [label="0..1"];
+
+  INBOX_THREAD -> R_THREAD_HAS_MSG [label="1"];
+  R_THREAD_HAS_MSG -> INBOX_MESSAGE [label="0..N"];
+
+  USER -> R_USER_SENDS_MSG [label="1"];
+  R_USER_SENDS_MSG -> INBOX_MESSAGE [label="0..N"];
+
+  // Tickets
+  INSTANCE -> R_INSTANCE_HAS_TICKET [label="1"];
+  R_INSTANCE_HAS_TICKET -> TICKET [label="0..N"];
+
+  UNIT -> R_UNIT_OWNS_TICKET [label="1"];
+  R_UNIT_OWNS_TICKET -> TICKET [label="0..N"];
+
+  USER -> R_USER_CREATES_TICKET [label="1"];
+  R_USER_CREATES_TICKET -> TICKET [label="0..N"];
+
+  USER -> R_USER_ASSIGNED_TICKET [label="0..1"];
+  R_USER_ASSIGNED_TICKET -> TICKET [label="0..N"];
+
+  TICKET -> R_TICKET_HAS_MSG [label="1"];
+  R_TICKET_HAS_MSG -> TICKET_MESSAGE [label="0..N"];
+  USER -> R_USER_SENDS_TMSG [label="1"];
+  R_USER_SENDS_TMSG -> TICKET_MESSAGE [label="0..N"];
+
+  TICKET -> R_TICKET_HAS_HIST [label="1"];
+  R_TICKET_HAS_HIST -> TICKET_STATUS_HISTORY [label="0..N"];
+  USER -> R_USER_CHANGES_STATUS [label="1"];
+  R_USER_CHANGES_STATUS -> TICKET_STATUS_HISTORY [label="0..N"];
+
+  // Deliveries
+  INSTANCE -> R_INSTANCE_HAS_DELIVERY [label="1"];
+  R_INSTANCE_HAS_DELIVERY -> DELIVERY [label="0..N"];
+
+  UNIT -> R_UNIT_RECEIVES_DELIVERY [label="1"];
+  R_UNIT_RECEIVES_DELIVERY -> DELIVERY [label="0..N"];
+
+  USER -> R_USER_CREATES_DELIVERY [label="1"];
+  R_USER_CREATES_DELIVERY -> DELIVERY [label="0..N"];
+
+  USER -> R_USER_ASSIGNED_DELIVERY [label="0..1"];
+  R_USER_ASSIGNED_DELIVERY -> DELIVERY [label="0..N"];
+
+  USER -> R_USER_DELIVERED_TO [label="0..1"];
+  R_USER_DELIVERED_TO -> DELIVERY [label="0..N"];
+
+  DELIVERY -> R_DELIVERY_HAS_EVENT [label="1"];
+  R_DELIVERY_HAS_EVENT -> DELIVERY_EVENT [label="0..N"];
+  USER -> R_USER_CREATES_DEVENT [label="1"];
+  R_USER_CREATES_DEVENT -> DELIVERY_EVENT [label="0..N"];
+
+  INSTANCE -> R_INSTANCE_HAS_TURN [label="1"];
+  R_INSTANCE_HAS_TURN -> DELIVERY_TURN [label="0..N"];
+  USER -> R_USER_WORKS_TURN [label="1"];
+  R_USER_WORKS_TURN -> DELIVERY_TURN [label="0..N"];
+
+  // ---------- NOTES for polymorphic pieces ----------
+  ATTACHMENT_LINK_NOTE [shape=note, label="ATTACHMENT_LINK uses (target_type, target_id)\n(polymorphic: Announcement/Post/Comment/Inbox/Ticket/Delivery...)"];
+  ATTACHMENT_LINK -> ATTACHMENT_LINK_NOTE [style=dashed, arrowhead=none];
+
+  MOD_NOTE [shape=note, label="MODERATION_ACTION has (content_type, content_id)\n(polymorphic: Post/Comment/Inbox_Message)"];
+  MODERATION_ACTION -> MOD_NOTE [style=dashed, arrowhead=none];
+
+  // ---------- SECTION CLUSTERS (just visual grouping) ----------
+  subgraph cluster_admin {
+    label="Admin Global";
+    style="rounded,dashed";
+    PLAN; INSTANCE; R_PLAN_HAS_INSTANCE;
+  }
+  subgraph cluster_iam {
+    label="IAM / Auth";
+    style="rounded,dashed";
+    USER; USER_CREDENTIAL; SESSION;
+    R_INSTANCE_CONTAINS_USER; R_USER_HAS_CREDENTIAL; R_USER_HAS_SESSION;
+  }
+  subgraph cluster_tenant {
+    label="Tenant (Condomínio)";
+    style="rounded,dashed";
+    CONDO_PROFILE; BLOCK; UNIT; INVITE;
+    R_INSTANCE_HAS_PROFILE; R_INSTANCE_HAS_BLOCK; R_BLOCK_HAS_UNIT; R_UNIT_HOUSES_USER; R_INSTANCE_ISSUES_INVITE; R_UNIT_TARGETS_INVITE;
+  }
+  subgraph cluster_ops {
+    label="Operações";
+    style="rounded,dashed";
+    TICKET; TICKET_MESSAGE; TICKET_STATUS_HISTORY;
+    DELIVERY; DELIVERY_EVENT; DELIVERY_TURN;
+    INBOX_THREAD; INBOX_MESSAGE;
+    R_INSTANCE_HAS_TICKET; R_UNIT_OWNS_TICKET; R_USER_CREATES_TICKET; R_USER_ASSIGNED_TICKET; R_TICKET_HAS_MSG; R_USER_SENDS_TMSG; R_TICKET_HAS_HIST; R_USER_CHANGES_STATUS;
+    R_INSTANCE_HAS_DELIVERY; R_UNIT_RECEIVES_DELIVERY; R_USER_CREATES_DELIVERY; R_USER_ASSIGNED_DELIVERY; R_USER_DELIVERED_TO; R_DELIVERY_HAS_EVENT; R_USER_CREATES_DEVENT; R_INSTANCE_HAS_TURN; R_USER_WORKS_TURN;
+    R_INSTANCE_HAS_THREAD; R_UNIT_HAS_THREAD; R_THREAD_HAS_MSG; R_USER_SENDS_MSG;
+  }
+  subgraph cluster_comm {
+    label="Comunicação";
+    style="rounded,dashed";
+    ANNOUNCEMENT; ANNOUNCEMENT_ACK; CHANNEL; CHANNEL_POST; CHANNEL_COMMENT; MODERATION_ACTION;
+    R_INSTANCE_HAS_ANN; R_USER_CREATES_ANN; R_ANN_HAS_ACK; R_USER_ACKS_ANN;
+    R_INSTANCE_HAS_CHANNEL; R_CHANNEL_HAS_POST; R_USER_WRITES_POST; R_POST_HAS_COMMENT; R_USER_WRITES_COMMENT;
+    R_INSTANCE_RECORDS_MOD; R_CHANNEL_SCOPES_MOD; R_USER_CREATES_MOD; R_USER_TARGETS_MOD;
+  }
+  subgraph cluster_files {
+    label="Arquivos / Auditoria";
+    style="rounded,dashed";
+    ATTACHMENT; ATTACHMENT_LINK; AUDIT_LOG; PUSH_TOKEN;
+    R_INSTANCE_OWNS_ATTACHMENT; R_USER_UPLOADS_ATTACHMENT; R_UNIT_SCOPES_ATTACHMENT; R_ATTACHMENT_HAS_LINK;
+    R_INSTANCE_WRITES_AUDIT; R_USER_ACTS_AUDIT;
+    R_INSTANCE_HAS_PUSH; R_USER_REG_PUSH;
+  }
+}

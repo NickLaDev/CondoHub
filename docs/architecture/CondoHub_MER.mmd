@@ -1,0 +1,284 @@
+%%{init: {"er": {"layoutDirection": "LR", "minEntityWidth": 140, "minEntityHeight": 70, "entityPadding": 10, "diagramPadding": 16}}}%%
+erDiagram
+  %% ============================================================
+  %% CondoHub - MER (para entrega)
+  %% Foco: Entidades (tabelas), Relacionamentos e Cardinalidades
+  %% Cardinalidades SEMPRE em texto: 1:1, 1:N, N:M (quando aplicavel via tabela associativa)
+  %% Observacao: N:M conceitual aparece como 2 relacionamentos 1:N via tabela associativa.
+  %% ============================================================
+
+  %% =========================
+  %% ADMIN GLOBAL (SaaS)
+  %% =========================
+  PLAN     ||--o{ INSTANCE : "1:N"
+
+  %% =========================
+  %% IAM
+  %% =========================
+  INSTANCE ||--o{ USER            : "1:N"
+  USER     ||--o{ SESSION         : "1:N"
+  USER     ||--|| USER_CREDENTIAL : "1:1"
+
+  %% =========================
+  %% FUNDACIONAIS (Tenant)
+  %% =========================
+  INSTANCE ||--|| CONDO_PROFILE : "1:1"
+  INSTANCE ||--o{ BLOCK         : "1:N"
+  BLOCK    ||--o{ UNIT          : "1:N"
+  UNIT     ||--o{ USER          : "1:N"
+
+  INSTANCE ||--o{ INVITE        : "1:N"
+  UNIT     o|--o{ INVITE        : "1:N(opt)"
+
+  %% =========================
+  %% UPLOADS / ATTACHMENTS
+  %% =========================
+  INSTANCE   ||--o{ ATTACHMENT      : "1:N"
+  USER       ||--o{ ATTACHMENT      : "1:N"
+  UNIT       o|--o{ ATTACHMENT      : "1:N(opt)"
+  ATTACHMENT ||--o{ ATTACHMENT_LINK : "1:N"
+
+  %% =========================
+  %% AUDIT / LOGS (append-only)
+  %% =========================
+  INSTANCE ||--o{ AUDIT_LOG : "1:N"
+  USER     o|--o{ AUDIT_LOG : "1:N(opt)"
+
+  %% =========================
+  %% PUSH TOKENS
+  %% =========================
+  INSTANCE ||--o{ PUSH_TOKEN : "1:N"
+  USER     ||--o{ PUSH_TOKEN : "1:N"
+
+  %% =========================
+  %% COMMUNICATION
+  %% =========================
+  INSTANCE     ||--o{ ANNOUNCEMENT     : "1:N"
+  USER         ||--o{ ANNOUNCEMENT     : "1:N cria"
+  ANNOUNCEMENT ||--o{ ANNOUNCEMENT_ACK : "1:N (N:M via ACK)"
+  USER         ||--o{ ANNOUNCEMENT_ACK : "1:N (N:M via ACK)"
+  %% N:M conceitual: USER <-> ANNOUNCEMENT (via ANNOUNCEMENT_ACK)
+
+  INSTANCE     ||--o{ CHANNEL         : "1:N"
+  CHANNEL      ||--o{ CHANNEL_POST    : "1:N"
+  USER         ||--o{ CHANNEL_POST    : "1:N"
+  CHANNEL_POST ||--o{ CHANNEL_COMMENT : "1:N"
+  USER         ||--o{ CHANNEL_COMMENT : "1:N"
+
+  INSTANCE ||--o{ MODERATION_ACTION : "1:N"
+  CHANNEL  ||--o{ MODERATION_ACTION : "1:N"
+  USER     ||--o{ MODERATION_ACTION : "1:N cria / 1:N sofre(opt)"
+
+  INSTANCE     ||--o{ INBOX_THREAD  : "1:N"
+  UNIT         ||--o| INBOX_THREAD  : "1:1(opt)"
+  INBOX_THREAD ||--o{ INBOX_MESSAGE : "1:N"
+  USER         ||--o{ INBOX_MESSAGE : "1:N"
+
+  %% =========================
+  %% TICKETS
+  %% =========================
+  INSTANCE ||--o{ TICKET : "1:N"
+  UNIT     ||--o{ TICKET : "1:N"
+  USER     ||--o{ TICKET : "1:N cria / 1:N atrib(opt)"
+
+  TICKET ||--o{ TICKET_MESSAGE        : "1:N"
+  USER   ||--o{ TICKET_MESSAGE        : "1:N"
+  TICKET ||--o{ TICKET_STATUS_HISTORY : "1:N"
+  USER   ||--o{ TICKET_STATUS_HISTORY : "1:N"
+
+  %% =========================
+  %% DELIVERIES (Encomendas)
+  %% =========================
+  INSTANCE ||--o{ DELIVERY : "1:N"
+  UNIT     ||--o{ DELIVERY : "1:N"
+  USER     ||--o{ DELIVERY : "1:N cria / 1:N atrib(opt) / 1:N recebe(opt)"
+
+  DELIVERY ||--o{ DELIVERY_EVENT : "1:N tem"
+  USER     ||--o{ DELIVERY_EVENT : "1:N registra"
+
+  INSTANCE ||--o{ DELIVERY_TURN : "1:N"
+  USER     ||--o{ DELIVERY_TURN : "1:N"
+
+  %% ============================================================
+  %% ENTIDADES (tabelas) - Mantidas MINIMAS (PK + FKs)
+  %% Isso melhora muito a legibilidade no Mermaid.
+  %% ============================================================
+
+  PLAN {
+    uuid id PK
+    text name "UNIQUE"
+  }
+
+  INSTANCE {
+    uuid id PK
+    uuid plan_id FK
+    text instance_key "UNIQUE"
+    text status
+  }
+
+  USER {
+    uuid id PK
+    uuid instance_id FK "NULL only ADMIN_GLOBAL"
+    uuid unit_id FK "NULL when not applicable"
+    text status
+  }
+
+  USER_CREDENTIAL {
+    uuid user_id PK "FK -> USER.id"
+  }
+
+  SESSION {
+    uuid id PK
+    uuid instance_id FK "NULL if global session"
+    uuid user_id FK
+  }
+
+  CONDO_PROFILE {
+    uuid id PK
+    uuid instance_id FK "UNIQUE"
+  }
+
+  BLOCK {
+    uuid id PK
+    uuid instance_id FK
+  }
+
+  UNIT {
+    uuid id PK
+    uuid instance_id FK
+    uuid block_id FK
+  }
+
+  INVITE {
+    uuid id PK
+    uuid instance_id FK
+    uuid unit_id FK "NULL unless invited_role=MORADOR"
+  }
+
+  ATTACHMENT {
+    uuid id PK
+    uuid instance_id FK
+    uuid owner_user_id FK
+    uuid unit_id FK "NULL when not applicable"
+  }
+
+  ATTACHMENT_LINK {
+    uuid id PK
+    uuid instance_id FK
+    uuid attachment_id FK
+    text target_type
+    uuid target_id
+  }
+
+  AUDIT_LOG {
+    uuid id PK
+    uuid instance_id FK "NULL for global actions"
+    uuid actor_user_id FK "NULL if system"
+  }
+
+  PUSH_TOKEN {
+    uuid id PK
+    uuid instance_id FK
+    uuid user_id FK
+  }
+
+  ANNOUNCEMENT {
+    uuid id PK
+    uuid instance_id FK
+    uuid created_by_user_id FK
+  }
+
+  ANNOUNCEMENT_ACK {
+    uuid id PK
+    uuid instance_id FK
+    uuid announcement_id FK
+    uuid user_id FK
+  }
+
+  CHANNEL {
+    uuid id PK
+    uuid instance_id FK
+  }
+
+  CHANNEL_POST {
+    uuid id PK
+    uuid instance_id FK
+    uuid channel_id FK
+    uuid user_id FK
+  }
+
+  CHANNEL_COMMENT {
+    uuid id PK
+    uuid instance_id FK
+    uuid post_id FK
+    uuid user_id FK
+  }
+
+  MODERATION_ACTION {
+
+    uuid id PK
+    uuid instance_id FK
+    uuid channel_id FK
+    text action_type
+    uuid created_by_user_id FK
+    uuid target_user_id FK "NULL when not applicable"
+    text content_type
+    uuid content_id
+  }
+
+  INBOX_THREAD {
+    uuid id PK
+    uuid instance_id FK
+    uuid unit_id FK
+  }
+
+  INBOX_MESSAGE {
+    uuid id PK
+    uuid instance_id FK
+    uuid thread_id FK
+    uuid user_id FK
+  }
+
+  TICKET {
+    uuid id PK
+    uuid instance_id FK
+    uuid unit_id FK
+    uuid created_by_user_id FK
+    uuid assigned_to_user_id FK "NULL when unassigned"
+  }
+
+  TICKET_MESSAGE {
+    uuid id PK
+    uuid instance_id FK
+    uuid ticket_id FK
+    uuid user_id FK
+  }
+
+  TICKET_STATUS_HISTORY {
+    uuid id PK
+    uuid instance_id FK
+    uuid ticket_id FK
+    uuid changed_by_user_id FK
+  }
+
+  DELIVERY {
+    uuid id PK
+    uuid instance_id FK
+    uuid unit_id FK
+    uuid created_by_user_id FK
+    uuid assigned_to_user_id FK "NULL when unassigned"
+    uuid delivered_to_user_id FK "NULL when not a user"
+  }
+
+  DELIVERY_EVENT {
+    uuid id PK
+    uuid instance_id FK
+    uuid delivery_id FK
+    uuid created_by_user_id FK
+  }
+
+  DELIVERY_TURN {
+    uuid id PK
+    uuid instance_id FK
+    uuid user_id FK
+  }

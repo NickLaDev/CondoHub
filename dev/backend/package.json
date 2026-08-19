@@ -1,0 +1,37 @@
+{
+  "name": "condohub-backend",
+  "version": "0.1.0",
+  "description": "CondoHub Backend API - Multi-instance condominium platform",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:migrate": "npx tsx scripts/db_migrate.ts",
+    "db:migrate:reconcile-checksums": "npx tsx scripts/db_reconcile_migration_checksums.ts",
+    "db:status": "npx tsx scripts/db_migrate.ts --status"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.46.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.19.0",
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^10.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/pg": "^8.16.0",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/uuid": "^10.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

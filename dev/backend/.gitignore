@@ -1,0 +1,6 @@
+node_modules/
+dist/
+var/uploads/*
+!var/uploads/.gitkeep
+# .env, .env.local e .env.online são versionados de propósito (ver README > Ambientes)
+*.log

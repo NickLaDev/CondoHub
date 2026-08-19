@@ -1,0 +1,393 @@
+erDiagram
+
+  %% ============================================================
+  %% ADMIN GLOBAL (SaaS)
+  %% ============================================================
+  PLAN ||--o{ INSTANCE : has
+
+  PLAN {
+    uuid id PK
+    text name "UNIQUE"
+    jsonb features_json
+    int max_units
+    int max_users
+    int max_storage_mb
+    timestamptz created_at
+    timestamptz archived_at
+  }
+
+  INSTANCE {
+    uuid id PK
+    uuid plan_id FK
+    text name
+    text instance_key "UNIQUE"
+    text status "ACTIVE|SUSPENDED"
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz suspended_at
+  }
+
+  %% ============================================================
+  %% IAM (Auth + Refresh rotativo)
+  %% ============================================================
+  INSTANCE ||--o{ USER : contains
+  USER ||--o{ SESSION : has
+  USER ||--|| USER_CREDENTIAL : has
+
+  USER {
+    uuid id PK
+    uuid instance_id FK "NULL only for ADMIN_GLOBAL"
+    uuid unit_id FK "NULL when not applicable"
+    text name
+    text email
+    text phone
+    text[] roles "ADMIN_GLOBAL|SINDICO_ADMIN|FUNC_ENTREGAS|FUNC_MANUTENCAO|MORADOR"
+    int token_version
+    text status "ACTIVE|DISABLED"
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz disabled_at
+    %% UNIQUE (instance_id, email) recommended (for ADMIN_GLOBAL: unique email globally)
+  }
+
+  USER_CREDENTIAL {
+    uuid user_id PK "also FK -> USER.id"
+    text password_hash
+    timestamptz password_updated_at
+    timestamptz created_at
+    timestamptz updated_at
+  }
+
+  SESSION {
+    uuid id PK
+    uuid instance_id FK "NULL if ADMIN_GLOBAL session"
+    uuid user_id FK
+    text refresh_hash "UNIQUE"
+    timestamptz expires_at
+    timestamptz revoked_at
+    timestamptz created_at
+    timestamptz rotated_at
+  }
+
+  %% ============================================================
+  %% FUNDACIONAIS (Tenant)
+  %% ============================================================
+  INSTANCE ||--|| CONDO_PROFILE : has
+  INSTANCE ||--o{ BLOCK : has
+  BLOCK ||--o{ UNIT : has
+  UNIT ||--o{ USER : houses
+
+  %% Invites podem ser por instância (staff/síndico) OU por unidade (morador)
+  INSTANCE ||--o{ INVITE : issues
+  UNIT ||--o{ INVITE : optionally_targets
+
+  CONDO_PROFILE {
+    uuid id PK
+    uuid instance_id FK "UNIQUE"
+    text name
+    text address
+    text phone
+    timestamptz created_at
+    timestamptz updated_at
+  }
+
+  BLOCK {
+    uuid id PK
+    uuid instance_id FK
+    text name
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz archived_at
+    %% UNIQUE (instance_id, name) recommended
+  }
+
+  UNIT {
+    uuid id PK
+    uuid instance_id FK
+    uuid block_id FK
+    text number
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz archived_at
+    %% UNIQUE (instance_id, block_id, number) recommended
+  }
+
+  INVITE {
+    uuid id PK
+    uuid instance_id FK
+    uuid unit_id FK "NULL unless invited_role=MORADOR"
+    text invited_role "MORADOR|SINDICO_ADMIN|FUNC_ENTREGAS|FUNC_MANUTENCAO"
+    text token_hash "UNIQUE"
+    timestamptz expires_at
+    timestamptz used_at
+    timestamptz revoked_at
+    timestamptz created_at
+    %% CHECK recommended:
+    %% - invited_role='MORADOR'  => unit_id IS NOT NULL
+    %% - invited_role!='MORADOR' => unit_id IS NULL
+  }
+
+  %% ============================================================
+  %% UPLOADS / ATTACHMENTS (genérico)
+  %% ============================================================
+  INSTANCE ||--o{ ATTACHMENT : owns
+  USER ||--o{ ATTACHMENT : uploads
+  UNIT ||--o{ ATTACHMENT : optionally_scopes
+  ATTACHMENT ||--o{ ATTACHMENT_LINK : links
+
+  ATTACHMENT {
+    uuid id PK
+    uuid instance_id FK
+    uuid owner_user_id FK
+    uuid unit_id FK "NULL when not applicable"
+    text bucket
+    text path
+    text content_type
+    bigint size_bytes
+    timestamptz created_at
+    %% UNIQUE (bucket, path) recommended
+  }
+
+  ATTACHMENT_LINK {
+    uuid id PK
+    uuid instance_id FK
+    uuid attachment_id FK
+    text target_type "ANNOUNCEMENT|CHANNEL_POST|CHANNEL_COMMENT|INBOX_MESSAGE|TICKET|TICKET_MESSAGE|DELIVERY"
+    uuid target_id
+    text tag "optional: MAIN|EVIDENCE_ARRIVAL|EVIDENCE_DELIVERY|..."
+    timestamptz created_at
+    %% UNIQUE (attachment_id, target_type, target_id, tag) recommended
+  }
+
+  %% ============================================================
+  %% AUDIT / LOGS (append-only)
+  %% ============================================================
+  INSTANCE ||--o{ AUDIT_LOG : writes
+  USER ||--o{ AUDIT_LOG : acts
+
+  AUDIT_LOG {
+    uuid id PK
+    uuid instance_id FK "NULL for global admin actions"
+    uuid actor_user_id FK "NULL if system action"
+    text action
+    text entity_type
+    uuid entity_id
+    jsonb details_json
+    text ip
+    text user_agent
+    text request_id
+    timestamptz created_at
+  }
+
+  %% ============================================================
+  %% PUSH TOKENS
+  %% ============================================================
+  INSTANCE ||--o{ PUSH_TOKEN : has
+  USER ||--o{ PUSH_TOKEN : registers
+
+  PUSH_TOKEN {
+    uuid id PK
+    uuid instance_id FK
+    uuid user_id FK
+    text token "UNIQUE"
+    text platform
+    timestamptz created_at
+    timestamptz revoked_at
+    %% UNIQUE (user_id, token) also ok if prefer
+  }
+
+  %% ============================================================
+  %% COMMUNICATION (Dev 2)
+  %% ============================================================
+  INSTANCE ||--o{ ANNOUNCEMENT : has
+  ANNOUNCEMENT ||--o{ ANNOUNCEMENT_ACK : requires
+  USER ||--o{ ANNOUNCEMENT_ACK : acks
+
+  INSTANCE ||--o{ CHANNEL : has
+  CHANNEL ||--o{ CHANNEL_POST : contains
+  CHANNEL_POST ||--o{ CHANNEL_COMMENT : contains
+  INSTANCE ||--o{ MODERATION_ACTION : records
+  CHANNEL ||--o{ MODERATION_ACTION : scopes
+  USER ||--o{ MODERATION_ACTION : targets
+  USER ||--o{ MODERATION_ACTION : creates
+
+  INSTANCE ||--o{ INBOX_THREAD : has
+  UNIT ||--o{ INBOX_THREAD : one_per_unit
+  INBOX_THREAD ||--o{ INBOX_MESSAGE : contains
+  USER ||--o{ INBOX_MESSAGE : sends
+
+  ANNOUNCEMENT {
+    uuid id PK
+    uuid instance_id FK
+    uuid created_by_user_id FK
+    text title
+    text body
+    boolean require_ack
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz archived_at
+  }
+
+  ANNOUNCEMENT_ACK {
+    uuid id PK
+    uuid instance_id FK
+    uuid announcement_id FK
+    uuid user_id FK
+    timestamptz created_at
+    %% UNIQUE (announcement_id, user_id) recommended
+  }
+
+  CHANNEL {
+    uuid id PK
+    uuid instance_id FK
+    text name
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz archived_at
+    %% UNIQUE (instance_id, name) recommended
+  }
+
+  CHANNEL_POST {
+    uuid id PK
+    uuid instance_id FK
+    uuid channel_id FK
+    uuid user_id FK
+    text body
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at
+  }
+
+  CHANNEL_COMMENT {
+    uuid id PK
+    uuid instance_id FK
+    uuid post_id FK
+    uuid user_id FK
+    text body
+    timestamptz created_at
+    timestamptz updated_at
+    timestamptz deleted_at
+  }
+
+  MODERATION_ACTION {
+    uuid id PK
+    uuid instance_id FK
+    uuid channel_id FK
+    text action_type "SILENCE_USER|REMOVE_CONTENT"
+    uuid target_user_id FK
+    text content_type "CHANNEL_POST|CHANNEL_COMMENT|INBOX_MESSAGE"
+    uuid content_id
+    text reason
+    int duration_minutes
+    uuid created_by_user_id FK
+    timestamptz created_at
+  }
+
+  INBOX_THREAD {
+    uuid id PK
+    uuid instance_id FK
+    uuid unit_id FK
+    text status "ABERTO|EM_ATENDIMENTO|RESOLVIDO|ARQUIVADO"
+    timestamptz created_at
+    timestamptz updated_at
+    %% UNIQUE (instance_id, unit_id) recommended  (1 thread por unidade)
+  }
+
+  INBOX_MESSAGE {
+    uuid id PK
+    uuid instance_id FK
+    uuid thread_id FK
+    uuid user_id FK
+    text message
+    timestamptz created_at
+  }
+
+  %% ============================================================
+  %% TICKETS (Dev 2 + contrato)
+  %% ============================================================
+  INSTANCE ||--o{ TICKET : has
+  UNIT ||--o{ TICKET : owns
+  USER ||--o{ TICKET : creates
+  USER ||--o{ TICKET : assigned
+  TICKET ||--o{ TICKET_MESSAGE : contains
+  TICKET ||--o{ TICKET_STATUS_HISTORY : tracks
+
+  TICKET {
+    uuid id PK
+    uuid instance_id FK
+    uuid unit_id FK
+    uuid created_by_user_id FK
+    uuid assigned_to_user_id FK "NULL when unassigned"
+    text category
+    text location
+    text description
+    text status "ABERTO|EM_ANALISE|EM_EXECUCAO|RESOLVIDO|FECHADO|REABERTO"
+    timestamptz due_at
+    timestamptz created_at
+    timestamptz updated_at
+  }
+
+  TICKET_MESSAGE {
+    uuid id PK
+    uuid instance_id FK
+    uuid ticket_id FK
+    uuid user_id FK
+    text message
+    timestamptz created_at
+  }
+
+  TICKET_STATUS_HISTORY {
+    uuid id PK
+    uuid instance_id FK
+    uuid ticket_id FK
+    text from_status
+    text to_status
+    uuid changed_by_user_id FK
+    timestamptz created_at
+  }
+
+  %% ============================================================
+  %% DELIVERIES (Dev 2 + contrato)
+  %% ============================================================
+  INSTANCE ||--o{ DELIVERY : has
+  UNIT ||--o{ DELIVERY : receives
+  USER ||--o{ DELIVERY : creates
+  USER ||--o{ DELIVERY : assigned
+  USER ||--o{ DELIVERY : delivered_to
+  DELIVERY ||--o{ DELIVERY_EVENT : tracks
+  INSTANCE ||--o{ DELIVERY_TURN : has
+  USER ||--o{ DELIVERY_TURN : works
+
+  DELIVERY {
+    uuid id PK
+    uuid instance_id FK
+    uuid unit_id FK
+    uuid created_by_user_id FK
+    uuid assigned_to_user_id FK "NULL when unassigned"
+    text recipient_name
+    text status "CHEGOU|EM_DISTRIBUICAO|ENTREGUE|NAO_ENTREGUE"
+    text delivered_to_name
+    uuid delivered_to_user_id FK "NULL when not a user"
+    timestamptz delivered_at
+    timestamptz created_at
+    timestamptz updated_at
+  }
+
+  DELIVERY_EVENT {
+    uuid id PK
+    uuid instance_id FK
+    uuid delivery_id FK
+    text type "CREATED|ASSIGNED|QR_INVALID|QR_MISMATCH|DELIVERED|FAILED"
+    uuid created_by_user_id FK
+    jsonb details_json
+    timestamptz created_at
+  }
+
+  DELIVERY_TURN {
+    uuid id PK
+    uuid instance_id FK
+    uuid user_id FK
+    timestamptz started_at
+    timestamptz ended_at
+    %% UNIQUE partial recommended: (instance_id, user_id) WHERE ended_at IS NULL
+  }
